@@ -1269,10 +1269,8 @@
     document.querySelector('.section-count').textContent =
       `${purchasedParts}/${totalParts} purchased`;
 
-    // Overall progress: parts = 20% weight, phases = 80% weight
-    const partsProgress = (purchasedParts / totalParts) * 20;
-    const phasesProgress = (completedPhases / totalPhases) * 80;
-    const totalProgress = Math.round(partsProgress + phasesProgress);
+    // Overall progress: based on phases (each phase = 20%)
+    const totalProgress = Math.round((completedPhases / totalPhases) * 100);
 
     // Update progress bar
     document.querySelector('.progress-pct').textContent = totalProgress + '%';
