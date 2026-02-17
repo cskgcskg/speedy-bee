@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bee35 Build Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #12151c;
+    --surface-2: #1a1e28;
+    --surface-3: #222833;
+    --border: #2a3040;
+    --border-hover: #3a4560;
+    --text: #e8ecf4;
+    --text-dim: #8892a8;
+    --text-muted: #555f75;
+    --accent: #f59e0b;
+    --accent-dim: #b47408;
+    --accent-glow: rgba(245, 158, 11, 0.15);
+    --green: #22c55e;
+    --green-dim: rgba(34, 197, 94, 0.15);
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --blue-dim: rgba(59, 130, 246, 0.12);
+    --purple: #a855f7;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Subtle grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(245, 158, 11, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245, 158, 11, 0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    padding: 48px 0 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 48px;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .logo-block {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .logo-icon {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, var(--accent), #d97706);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    box-shadow: 0 4px 24px var(--accent-glow);
+  }
+
+  h1 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+  }
+
+  h1 span {
+    color: var(--accent);
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .build-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* ─── PROGRESS BAR ─── */
+  .progress-section {
+    margin-bottom: 48px;
+  }
+
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+  }
+
+  .progress-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  .progress-pct {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .progress-track {
+    width: 100%;
+    height: 6px;
+    background: var(--surface-2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #fbbf24);
+    border-radius: 3px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
+
+  /* ─── PHASE TIMELINE ─── */
+  .phases {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 56px;
+  }
+
+  .phase-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    transition: all 0.3s;
+  }
+
+  .phase-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-2px);
+    cursor: pointer;
+  }
+
+  .phase-card.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 24px var(--accent-glow);
+  }
+
+  .phase-card.completed {
+    border-color: var(--green);
+  }
+
+  .phase-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .phase-card.active .phase-num { color: var(--accent); }
+  .phase-card.completed .phase-num { color: var(--green); }
+
+  .phase-title {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 6px;
+  }
+
+  .phase-desc {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  .phase-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    border: 2px solid var(--border);
+    transition: all 0.2s;
+  }
+
+  .phase-card:hover .phase-badge {
+    border-color: var(--text-muted);
+  }
+
+  .phase-card.completed .phase-badge {
+    background: var(--green-dim);
+    color: var(--green);
+    border-color: var(--green);
+  }
+
+  .phase-card.completed .phase-title {
+    text-decoration: line-through;
+    text-decoration-color: var(--green);
+    opacity: 0.85;
+  }
+
+  /* ─── SECTION HEADERS ─── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-header h2 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .section-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .section-count {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+
+  /* ─── PARTS TABLE ─── */
+  .parts-section { margin-bottom: 56px; }
+
+  .parts-table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .parts-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  .parts-table thead th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+    position: sticky;
+    top: 0;
+  }
+
+  .parts-table tbody tr {
+    border-bottom: 1px solid rgba(42, 48, 64, 0.5);
+    transition: background 0.2s;
+  }
+
+  .parts-table tbody tr:last-child { border-bottom: none; }
+  .parts-table tbody tr:hover { background: var(--surface-2); }
+
+  .parts-table td {
+    padding: 12px 16px;
+    vertical-align: middle;
+  }
+
+  .part-name {
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .part-status {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    border: 2px solid var(--border);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .part-status.purchased {
+    background: var(--green);
+    border-color: var(--green);
+    color: #fff;
+  }
+
+  .part-desc {
+    color: var(--text-dim);
+    font-size: 13px;
+    max-width: 400px;
+  }
+
+  .part-price {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .part-link a {
+    color: var(--blue);
+    text-decoration: none;
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    transition: color 0.2s;
+  }
+
+  .part-link a:hover { color: #60a5fa; }
+
+  .category-row td {
+    padding: 10px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--accent);
+    background: rgba(245, 158, 11, 0.05);
+    border-bottom: 1px solid var(--border) !important;
+  }
+
+  .total-row td {
+    padding: 14px 16px;
+    font-weight: 700;
+    border-top: 2px solid var(--border);
+    background: var(--surface-2);
+  }
+
+  .total-row .part-price {
+    color: var(--accent);
+    font-size: 16px;
+  }
+
+  /* ─── TIPS CARDS ─── */
+  .tips-section { margin-bottom: 56px; }
+
+  .tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 16px;
+  }
+
+  .tip-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    transition: all 0.3s;
+  }
+
+  .tip-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-2px);
+  }
+
+  .tip-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  .tip-tag.solder { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+  .tip-tag.safety { background: rgba(168, 85, 247, 0.15); color: var(--purple); }
+  .tip-tag.build { background: var(--accent-glow); color: var(--accent); }
+  .tip-tag.fpv { background: var(--blue-dim); color: var(--blue); }
+  .tip-tag.battery { background: var(--green-dim); color: var(--green); }
+
+  .tip-card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .tip-card p {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+
+  .tip-card ul {
+    list-style: none;
+    margin-top: 12px;
+  }
+
+  .tip-card ul li {
+    font-size: 13px;
+    color: var(--text-dim);
+    padding: 6px 0;
+    padding-left: 20px;
+    position: relative;
+    line-height: 1.5;
+  }
+
+  .tip-card ul li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+  }
+
+  /* ─── SOLDERING GUIDE ─── */
+  .solder-section { margin-bottom: 56px; }
+
+  .solder-steps {
+    display: grid;
+    gap: 16px;
+  }
+
+  .solder-step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    gap: 16px;
+    align-items: start;
+    transition: all 0.3s;
+  }
+
+  .solder-step:hover {
+    border-color: var(--border-hover);
+  }
+
+  .step-num {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: var(--surface-3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--accent);
+  }
+
+  .step-content h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .step-content p {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+
+  /* ─── RESOURCES ─── */
+  .resources-section { margin-bottom: 56px; }
+
+  .resource-links {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+  }
+
+  .resource-link {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--text);
+    transition: all 0.3s;
+  }
+
+  .resource-link:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-1px);
+    background: var(--surface-2);
+  }
+
+  .resource-link .r-icon {
+    font-size: 24px;
+    width: 40px;
+    text-align: center;
+  }
+
+  .resource-link .r-label {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .resource-link .r-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .resource-link .r-arrow {
+    margin-left: auto;
+    color: var(--text-muted);
+    font-size: 18px;
+  }
+
+  /* ─── BUILD LOG ─── */
+  .log-section { margin-bottom: 80px; }
+
+  .log-entries {
+    display: grid;
+    gap: 12px;
+  }
+
+  .log-entry {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 10px 10px 0;
+    padding: 16px 20px;
+  }
+
+  .log-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .log-text {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    padding: 32px 0;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  footer p {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 768px) {
+    h1 { font-size: 22px; }
+    .header-top { flex-direction: column; }
+    .phases { grid-template-columns: 1fr 1fr; }
+    .tips-grid { grid-template-columns: 1fr; }
+    .parts-table { font-size: 13px; }
+    .parts-table td, .parts-table th { padding: 10px 12px; }
+    .part-desc { display: none; }
+    .solder-step { grid-template-columns: 1fr; }
+    .step-num { width: 36px; height: 36px; font-size: 14px; border-radius: 8px; }
+  }
+
+  @media (max-width: 480px) {
+    .phases { grid-template-columns: 1fr; }
+    .container { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ════ HEADER ════ -->
+  <header>
+    <div class="header-top">
+      <div class="logo-block">
+        <div class="logo-icon">🐝</div>
+        <div>
+          <h1>Bee<span>35</span> Build Tracker</h1>
+          <div class="subtitle">SpeedyBee 3.5" Cinewhoop // DJI O4</div>
+        </div>
+      </div>
+      <div class="build-status">
+        <div class="status-dot"></div>
+        Phase 1 — Gathering Parts
+      </div>
+    </div>
+  </header>
+
+  <!-- ════ PROGRESS ════ -->
+  <div class="progress-section">
+    <div class="progress-header">
+      <span class="progress-label">Overall Build Progress</span>
+      <span class="progress-pct">5%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" style="width: 5%"></div>
+    </div>
+  </div>
+
+  <!-- ════ PHASES ════ -->
+  <div class="phases">
+    <div class="phase-card active" data-phase="1">
+      <div class="phase-badge"></div>
+      <div class="phase-num">Phase 01</div>
+      <div class="phase-title">Parts &amp; Tools</div>
+      <div class="phase-desc">Order components, soldering gear, and workspace setup</div>
+    </div>
+    <div class="phase-card" data-phase="2">
+      <div class="phase-badge"></div>
+      <div class="phase-num">Phase 02</div>
+      <div class="phase-title">Solder Practice</div>
+      <div class="phase-desc">Learn soldering fundamentals on practice boards before touching real components</div>
+    </div>
+    <div class="phase-card" data-phase="3">
+      <div class="phase-badge"></div>
+      <div class="phase-num">Phase 03</div>
+      <div class="phase-title">Assembly</div>
+      <div class="phase-desc">FC/ESC stack, motors, DJI O4 air unit, GPS, and wiring</div>
+    </div>
+    <div class="phase-card" data-phase="4">
+      <div class="phase-badge"></div>
+      <div class="phase-num">Phase 04</div>
+      <div class="phase-title">Config &amp; Tune</div>
+      <div class="phase-desc">Betaflight setup, PID tuning, OSD, failsafe, and GPS rescue config</div>
+    </div>
+    <div class="phase-card" data-phase="5">
+      <div class="phase-badge"></div>
+      <div class="phase-num">Phase 05</div>
+      <div class="phase-title">First Flight</div>
+      <div class="phase-desc">Pre-flight checks, maiden hover, and dialling in the tune</div>
+    </div>
+  </div>
+
+  <!-- ════ PARTS LIST ════ -->
+  <section class="parts-section">
+    <div class="section-header">
+      <div class="section-icon" style="background: var(--accent-glow); color: var(--accent);">🔩</div>
+      <h2>Parts List</h2>
+      <div class="section-count">28 components</div>
+    </div>
+
+    <div class="parts-table-wrap">
+      <table class="parts-table">
+        <thead>
+          <tr>
+            <th style="width:30px"></th>
+            <th>Component</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Link</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Core Components -->
+          <tr class="category-row"><td colspan="5">⬡ Core Components</td></tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">DJI O4 Air Unit Pro</td>
+            <td class="part-desc">1/1.3" sensor, 4K/120fps, O4 transmission, binds to DJI RC N3</td>
+            <td class="part-price">£172.00</td>
+            <td class="part-link"><a href="https://www.aliexpress.com/item/1005008360798696.html" target="_blank">AliExpress →</a></td>
+          </tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">SpeedyBee Bee35 Frame Kit</td>
+            <td class="part-desc">3.5" cinewhoop frame with ducts, supports O4 mounting, 20x20 stack</td>
+            <td class="part-price">£40.00</td>
+            <td class="part-link"><a href="https://www.aliexpress.com/item/1005009200368477.html" target="_blank">AliExpress →</a></td>
+          </tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">SpeedyBee F405 Mini BLS 35A Stack</td>
+            <td class="part-desc">FC/ESC combo; 20x20mm, 3-6S, DJI plug support</td>
+            <td class="part-price">£45.00</td>
+            <td class="part-link"><a href="https://www.aliexpress.com/item/1005008856594605.html" target="_blank">AliExpress →</a></td>
+          </tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">SpeedyBee 2006 1950KV Motors (x4)</td>
+            <td class="part-desc">Brushless motors for 4S/6S; larger stator for better heat handling</td>
+            <td class="part-price">£60.00</td>
+            <td class="part-link"><a href="https://www.aliexpress.com/i/1005008654122529.html" target="_blank">AliExpress →</a></td>
+          </tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">Gemfan D90-5 Props (10-12 pairs)</td>
+            <td class="part-desc">3.5" 5-blade ducted props for cinewhoop; CW/CCW</td>
+            <td class="part-price">£11.00</td>
+            <td class="part-link"><a href="https://www.aliexpress.com/item/1005003715833266.html" target="_blank">AliExpress →</a></td>
+          </tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">HGLRC M100-5883 GPS Module</td>
+            <td class="part-desc">u-blox M10 GPS with compass for Betaflight GPS Rescue (RTH)</td>
+            <td class="part-price">£10.00</td>
+            <td class="part-link"><a href="https://www.aliexpress.com/item/1005006160735318.html" target="_blank">AliExpress →</a></td>
+          </tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">DJI O3 Air Unit</td>
+            <td class="part-desc">Alternative/backup digital FPV system</td>
+            <td class="part-price">£179.00</td>
+            <td class="part-link"><a href="https://www.hobbyrc.co.uk/dji-o3-air-unit" target="_blank">HobbyRC →</a></td>
+          </tr>
+
+          <!-- Power System -->
+          <tr class="category-row"><td colspan="5">⚡ Power System</td></tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">Tattu 1300mAh 6S 120C LiPo</td>
+            <td class="part-desc">High-performance LiPo battery</td>
+            <td class="part-price">£30.00</td>
+            <td class="part-link"><a href="https://www.unmannedtechshop.co.uk/products/tattu-r-line" target="_blank">Unmanned Tech →</a></td>
+          </tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">Auline VTC6 3000mAh 6S1P</td>
+            <td class="part-desc">Li-ion best fit for SpeedyBee Bee35 (according to Grok)</td>
+            <td class="part-price">£43.41</td>
+            <td class="part-link"><a href="https://uk.banggood.com/Auline-VTC6-22_2V-3000mAh-6S-3" target="_blank">Banggood →</a></td>
+          </tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">ISDT Q6 Nano Charger 200W 8A</td>
+            <td class="part-desc">For the Auline charger; DC 2-6S balance charger</td>
+            <td class="part-price">£67.38</td>
+            <td class="part-link"><a href="https://www.amazon.co.uk/YUNIQUE-GREEN-CLEAN-POWER" target="_blank">Amazon →</a></td>
+          </tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">Charger (additional)</td>
+            <td class="part-desc">Additional/backup charger</td>
+            <td class="part-price">—</td>
+            <td class="part-link"><a href="https://www.amazon.co.uk/ISDT-Battery-Charger-Discharger-Lithium" target="_blank">Amazon →</a></td>
+          </tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">iMax B6 80W Balance Charger</td>
+            <td class="part-desc">LiPo charger for 1-6S; includes adapter, balance charging</td>
+            <td class="part-price">£20.00</td>
+            <td class="part-link"><a href="https://www.aliexpress.com/item/4000262782780.html" target="_blank">AliExpress →</a></td>
+          </tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">LiPo Fireproof Charging Bag</td>
+            <td class="part-desc">Explosion-proof bag for safe charging/storage</td>
+            <td class="part-price">£8.00</td>
+            <td class="part-link"><a href="https://www.amazon.co.uk/YINETTECH-explosiones-p" target="_blank">Amazon →</a></td>
+          </tr>
+
+          <!-- Electronics & Accessories -->
+          <tr class="category-row"><td colspan="5">📡 Electronics &amp; Accessories</td></tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">HGLRC Soter FPV Buzzer</td>
+            <td class="part-desc">5V buzzer with battery; plugs into FC</td>
+            <td class="part-price">£8.00</td>
+            <td class="part-link"><a href="https://www.aliexpress.com/item/1005006306314554.html" target="_blank">AliExpress →</a></td>
+          </tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">Low-ESR Capacitor (1000uF 35V)</td>
+            <td class="part-desc">For voltage protection</td>
+            <td class="part-price">£4.00</td>
+            <td class="part-link">Search AliExpress</td>
+          </tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">Battery Connector (XT60)</td>
+            <td class="part-desc">Battery connector pigtail (if needed)</td>
+            <td class="part-price">£4.00</td>
+            <td class="part-link">Search AliExpress</td>
+          </tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">Silicone Dampers (20pcs)</td>
+            <td class="part-desc">Gel pads/spacers for O4 camera vibration dampening (anti-jello)</td>
+            <td class="part-price">£4.00</td>
+            <td class="part-link"><a href="https://www.aliexpress.com/item/1005001657476869.html" target="_blank">AliExpress →</a></td>
+          </tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">Bee35 GoPro TPU Mount</td>
+            <td class="part-desc">Adjustable TPU mount for GoPro Hero (0-40° angle)</td>
+            <td class="part-price">£10.00</td>
+            <td class="part-link">Search AliExpress</td>
+          </tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">Bee35 GPS TPU Mount</td>
+            <td class="part-desc">TPU holder for GPS module (clear sky view)</td>
+            <td class="part-price">£5.00</td>
+            <td class="part-link">Search AliExpress</td>
+          </tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">Back Plate for Heat Dissipation</td>
+            <td class="part-desc">Heat management plate</td>
+            <td class="part-price">—</td>
+            <td class="part-link"><a href="https://www.aliexpress.com/item/1005006634958045.html" target="_blank">AliExpress →</a></td>
+          </tr>
+
+          <!-- Tools & Workshop -->
+          <tr class="category-row"><td colspan="5">🔧 Tools &amp; Workshop</td></tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">Soldering Kit</td>
+            <td class="part-desc">Soldering iron, solder, flux, tips, and accessories</td>
+            <td class="part-price">£581.28</td>
+            <td class="part-link"><a href="https://www.amazon.co.uk/KEPIOG-Soldering-Heating-Magn" target="_blank">Amazon →</a></td>
+          </tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">MUSTOOL MT007 Pro Multimeter</td>
+            <td class="part-desc">For checking solder joints (continuity, voltage, resistance)</td>
+            <td class="part-price">£15.00</td>
+            <td class="part-link"><a href="https://www.aliexpress.com/item/1005006588656672.html" target="_blank">AliExpress →</a></td>
+          </tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">Hex Keys (1.5–3mm)</td>
+            <td class="part-desc">4 hexes from 1.5 to 3mm</td>
+            <td class="part-price">£8.49</td>
+            <td class="part-link"><a href="https://www.amazon.co.uk/dp/B0CZRS4YKN" target="_blank">Amazon →</a></td>
+          </tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">Silicone Repair Mat</td>
+            <td class="part-desc">Heat-resistant anti-static mat (45x30cm) with magnetic sections</td>
+            <td class="part-price">£12.00</td>
+            <td class="part-link">Search AliExpress</td>
+          </tr>
+          <tr>
+            <td><span class="part-status" title="Click to toggle"></span></td>
+            <td class="part-name">Heat Shrink Tubing &amp; Zip Ties</td>
+            <td class="part-desc">Wire management</td>
+            <td class="part-price">£4.00</td>
+            <td class="part-link">Search AliExpress</td>
+          </tr>
+
+          <!-- Total -->
+          <tr class="total-row">
+            <td></td>
+            <td colspan="2" style="font-family: 'JetBrains Mono', monospace; font-size: 13px;">ESTIMATED TOTAL</td>
+            <td class="part-price">£1,365.56</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ════ LEARNING TO SOLDER ════ -->
+  <section class="solder-section">
+    <div class="section-header">
+      <div class="section-icon" style="background: rgba(239, 68, 68, 0.15); color: var(--red);">🔥</div>
+      <h2>Learning to Solder</h2>
+    </div>
+
+    <div class="solder-steps">
+      <div class="solder-step">
+        <div class="step-num">01</div>
+        <div class="step-content">
+          <h3>Get a Practice Kit First</h3>
+          <p>Before touching any real components, buy a cheap soldering practice PCB kit from AliExpress (search "soldering practice board"). These cost £2-5 and let you practice through-hole and SMD soldering without risking your £45 FC stack. Solder at least 50+ joints before moving to real parts.</p>
+        </div>
+      </div>
+      <div class="solder-step">
+        <div class="step-num">02</div>
+        <div class="step-content">
+          <h3>Essential Soldering Supplies</h3>
+          <p>Use leaded solder (63/37 tin/lead) — it flows much easier than lead-free and is far more forgiving for beginners. Get a good flux pen or paste flux. Use a chisel tip (not conical) for better heat transfer. Keep your tip clean with a brass wire sponge, not a wet sponge. Temperature: start at 350°C for leaded solder.</p>
+        </div>
+      </div>
+      <div class="solder-step">
+        <div class="step-num">03</div>
+        <div class="step-content">
+          <h3>The Technique</h3>
+          <p>Heat the pad AND the component lead simultaneously for 2-3 seconds, then feed solder into the joint (not onto the iron tip). You want the solder to flow naturally onto the heated surfaces. A good joint looks like a shiny, concave volcano shape. A bad joint looks dull, blobby, or has a cold crack — reheat and reflow if this happens.</p>
+        </div>
+      </div>
+      <div class="solder-step">
+        <div class="step-num">04</div>
+        <div class="step-content">
+          <h3>Tinning Wires</h3>
+          <p>Always tin your wires before soldering them to pads. Strip about 3mm of insulation, apply flux, then melt a thin coat of solder onto the exposed wire. This makes the final connection much cleaner and stronger. For motor wires on the Bee35, tin both the ESC pads and wire ends before joining.</p>
+        </div>
+      </div>
+      <div class="solder-step">
+        <div class="step-num">05</div>
+        <div class="step-content">
+          <h3>FC Stack Soldering Order</h3>
+          <p>For the SpeedyBee F405 stack: (1) Solder the ESC power pads (battery lead) first. (2) Then motor wires — keep them short and tidy. (3) Solder the DJI O4 connector or direct wire. (4) Buzzer and GPS UART connections last. Always check continuity with your multimeter between each step. A short circuit can destroy your FC instantly.</p>
+        </div>
+      </div>
+      <div class="solder-step">
+        <div class="step-num">06</div>
+        <div class="step-content">
+          <h3>Common Mistakes to Avoid</h3>
+          <p>Don't apply too much solder — a little goes a long way on 20x20 pads. Don't move the joint while it cools (cold joint). Don't forget to add flux — it's the difference between a frustrating session and a clean one. Don't overheat components — if it's not flowing in 3-4 seconds, remove heat, add flux, and try again. Always work in a ventilated area.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ TIPS & TRICKS ════ -->
+  <section class="tips-section">
+    <div class="section-header">
+      <div class="section-icon" style="background: var(--blue-dim); color: var(--blue);">💡</div>
+      <h2>Tips &amp; Tricks</h2>
+    </div>
+
+    <div class="tips-grid">
+      <div class="tip-card">
+        <div class="tip-tag safety">Safety</div>
+        <h3>LiPo Battery Safety</h3>
+        <p>LiPo batteries can catch fire if mishandled. Follow these rules religiously:</p>
+        <ul>
+          <li>Never charge unattended — always be in the same room</li>
+          <li>Always use the fireproof charging bag</li>
+          <li>Storage charge (3.8V/cell) if not flying within 48 hours</li>
+          <li>Never discharge below 3.5V per cell</li>
+          <li>Inspect for puffing before every flight — puffy = retired</li>
+          <li>Never charge immediately after flying — let it cool 15+ mins</li>
+        </ul>
+      </div>
+
+      <div class="tip-card">
+        <div class="tip-tag build">Build</div>
+        <h3>Bee35 Assembly Tips</h3>
+        <p>Specific tips for this frame and build:</p>
+        <ul>
+          <li>Use threadlock (blue Loctite) on motor screws only</li>
+          <li>Mount the FC with the USB port accessible — you'll need it often</li>
+          <li>Route wires to avoid props — zip tie everything down</li>
+          <li>Soft-mount the FC stack with silicone grommets to reduce vibration</li>
+          <li>The O4 Air Unit camera fits in the front — use dampers to reduce jello</li>
+          <li>Take photos at every stage so you can troubleshoot later</li>
+        </ul>
+      </div>
+
+      <div class="tip-card">
+        <div class="tip-tag fpv">FPV / Betaflight</div>
+        <h3>Betaflight Configuration</h3>
+        <p>Key settings to configure once assembled:</p>
+        <ul>
+          <li>Flash the latest Betaflight firmware for your F405 target</li>
+          <li>Set up GPS Rescue as a failsafe — essential for flying outdoors</li>
+          <li>Enable DShot600 for motor protocol</li>
+          <li>Set appropriate rates — start with low rates while learning</li>
+          <li>Configure the OSD to show battery voltage, mAh used, and GPS sats</li>
+          <li>Set motor idle to 5.5-6% for smooth cinematic footage</li>
+        </ul>
+      </div>
+
+      <div class="tip-card">
+        <div class="tip-tag solder">Soldering</div>
+        <h3>Workspace Setup</h3>
+        <p>A good workspace prevents mistakes and keeps you safe:</p>
+        <ul>
+          <li>Use the silicone mat — it's heat-resistant and has magnetic sections for screws</li>
+          <li>Good lighting is essential — get a desk lamp with magnification</li>
+          <li>Keep isopropyl alcohol (IPA) and cotton buds handy for cleaning flux residue</li>
+          <li>A third-hand / helping hand tool holds PCBs while you solder</li>
+          <li>Solder fume extractor or work near an open window</li>
+        </ul>
+      </div>
+
+      <div class="tip-card">
+        <div class="tip-tag battery">Battery</div>
+        <h3>Li-ion vs LiPo for Cinewhoop</h3>
+        <p>The Bee35 can run both. Li-ion (Auline VTC6 pack) gives you 8-12 minute flights with smooth, cinematic long-range cruising. LiPo (Tattu 1300mAh 6S) gives you more punch and responsiveness but shorter 4-6 minute flights. Start with Li-ion for learning — the lower C-rating is more forgiving on your ESCs and gives more flight time to practice.</p>
+      </div>
+
+      <div class="tip-card">
+        <div class="tip-tag fpv">FPV</div>
+        <h3>Pre-Flight Checklist</h3>
+        <p>Run through this every time before you arm:</p>
+        <ul>
+          <li>Props are tight and spinning the correct direction</li>
+          <li>Battery is fully charged and not puffy</li>
+          <li>All screws are tight (frame, motor, stack)</li>
+          <li>Video feed is clear and no jello</li>
+          <li>GPS has 8+ satellites locked</li>
+          <li>Failsafe is set and tested</li>
+          <li>No loose wires visible</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ USEFUL RESOURCES ════ -->
+  <section class="resources-section">
+    <div class="section-header">
+      <div class="section-icon" style="background: rgba(168, 85, 247, 0.15); color: var(--purple);">📚</div>
+      <h2>Useful Resources</h2>
+    </div>
+
+    <div class="resource-links">
+      <a href="https://betaflight.com/docs/wiki" target="_blank" class="resource-link">
+        <div class="r-icon">🦋</div>
+        <div>
+          <div class="r-label">Betaflight Wiki</div>
+          <div class="r-desc">Official docs for firmware configuration</div>
+        </div>
+        <div class="r-arrow">→</div>
+      </a>
+      <a href="https://oscarliang.com" target="_blank" class="resource-link">
+        <div class="r-icon">📖</div>
+        <div>
+          <div class="r-label">Oscar Liang's Blog</div>
+          <div class="r-desc">The FPV bible — tutorials for everything</div>
+        </div>
+        <div class="r-arrow">→</div>
+      </a>
+      <a href="https://www.youtube.com/@JoshuaBardwell" target="_blank" class="resource-link">
+        <div class="r-icon">🎬</div>
+        <div>
+          <div class="r-label">Joshua Bardwell</div>
+          <div class="r-desc">Best YouTube channel for FPV build tutorials</div>
+        </div>
+        <div class="r-arrow">→</div>
+      </a>
+      <a href="https://www.speedybee.com/" target="_blank" class="resource-link">
+        <div class="r-icon">🐝</div>
+        <div>
+          <div class="r-label">SpeedyBee Official</div>
+          <div class="r-desc">Firmware, manuals, and wiring diagrams</div>
+        </div>
+        <div class="r-arrow">→</div>
+      </a>
+      <a href="https://droneauthority.co.uk" target="_blank" class="resource-link">
+        <div class="r-icon">🇬🇧</div>
+        <div>
+          <div class="r-label">UK Drone Regulations</div>
+          <div class="r-desc">CAA rules, flyer ID, and operator ID info</div>
+        </div>
+        <div class="r-arrow">→</div>
+      </a>
+      <a href="https://rotorbuilds.com/" target="_blank" class="resource-link">
+        <div class="r-icon">🔧</div>
+        <div>
+          <div class="r-label">RotorBuilds</div>
+          <div class="r-desc">Community builds and component lists for reference</div>
+        </div>
+        <div class="r-arrow">→</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ════ BUILD LOG ════ -->
+  <section class="log-section">
+    <div class="section-header">
+      <div class="section-icon" style="background: var(--green-dim); color: var(--green);">📝</div>
+      <h2>Build Log</h2>
+    </div>
+
+    <div class="log-entries">
+      <div class="log-entry">
+        <div class="log-date">17 Feb 2026</div>
+        <div class="log-text">Project started! Created parts list and began researching components. Decided on DJI O4 Air Unit Pro as the primary FPV system with the SpeedyBee F405 Mini BLS 35A stack. Going with both Li-ion and LiPo battery options for versatility. Need to order soldering practice kits before touching any real components.</div>
+      </div>
+      <div class="log-entry">
+        <div class="log-date">—</div>
+        <div class="log-text" style="color: var(--text-muted); font-style: italic;">Next entry coming soon... update this file as you make progress!</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ FOOTER ════ -->
+  <footer>
+    <p>Bee35 Build Tracker — Built with 🐝 and deployed on <a href="https://pages.github.com" target="_blank">GitHub Pages</a></p>
+  </footer>
+
+</div>
+
+<script>
+  // ─── STATE ───
+  const STORAGE_KEY = 'bee35-build-state';
+  let state = loadState();
+
+  function loadState() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch(e) {}
+    return { parts: {}, phases: {} };
+  }
+
+  function saveState() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+  }
+
+  // ─── PARTS CHECKBOXES ───
+  const partButtons = document.querySelectorAll('.part-status');
+  partButtons.forEach((btn, i) => {
+    // Restore saved state
+    if (state.parts[i]) {
+      btn.classList.add('purchased');
+      btn.textContent = '✓';
+    }
+
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('purchased');
+      const isPurchased = btn.classList.contains('purchased');
+      btn.textContent = isPurchased ? '✓' : '';
+
+      if (isPurchased) {
+        state.parts[i] = true;
+      } else {
+        delete state.parts[i];
+      }
+      saveState();
+      updateEverything();
+    });
+  });
+
+  // ─── PHASE CARDS ───
+  const phaseCards = document.querySelectorAll('.phase-card');
+  const phaseNames = ['Parts & Tools', 'Solder Practice', 'Assembly', 'Config & Tune', 'First Flight'];
+
+  phaseCards.forEach(card => {
+    const phaseNum = card.dataset.phase;
+
+    // Restore saved state
+    if (state.phases[phaseNum]) {
+      card.classList.remove('active');
+      card.classList.add('completed');
+      card.querySelector('.phase-badge').textContent = '✓';
+    }
+
+    card.addEventListener('click', () => {
+      const isCompleted = card.classList.contains('completed');
+
+      if (isCompleted) {
+        // Undo — set back to default
+        card.classList.remove('completed');
+        card.querySelector('.phase-badge').textContent = '';
+        delete state.phases[phaseNum];
+      } else {
+        // Mark as done
+        card.classList.remove('active');
+        card.classList.add('completed');
+        card.querySelector('.phase-badge').textContent = '✓';
+        state.phases[phaseNum] = true;
+      }
+
+      // Update which card is "active" (first non-completed)
+      updateActivePhase();
+      saveState();
+      updateEverything();
+    });
+  });
+
+  function updateActivePhase() {
+    let foundActive = false;
+    phaseCards.forEach(card => {
+      card.classList.remove('active');
+      if (!card.classList.contains('completed') && !foundActive) {
+        card.classList.add('active');
+        foundActive = true;
+      }
+    });
+  }
+
+  // ─── PROGRESS CALCULATION ───
+  function updateEverything() {
+    const totalParts = partButtons.length;
+    const purchasedParts = Object.keys(state.parts).length;
+    const totalPhases = phaseCards.length;
+    const completedPhases = Object.keys(state.phases).length;
+
+    // Parts count in section header
+    document.querySelector('.section-count').textContent =
+      `${purchasedParts}/${totalParts} purchased`;
+
+    // Overall progress: parts = 20% weight, phases = 80% weight
+    const partsProgress = (purchasedParts / totalParts) * 20;
+    const phasesProgress = (completedPhases / totalPhases) * 80;
+    const totalProgress = Math.round(partsProgress + phasesProgress);
+
+    // Update progress bar
+    document.querySelector('.progress-pct').textContent = totalProgress + '%';
+    document.querySelector('.progress-fill').style.width = totalProgress + '%';
+
+    // Update header status
+    const statusEl = document.querySelector('.build-status');
+    const dot = statusEl.querySelector('.status-dot');
+
+    if (completedPhases === totalPhases) {
+      dot.style.background = 'var(--green)';
+      statusEl.innerHTML = '';
+      statusEl.appendChild(dot);
+      statusEl.append(' BUILD COMPLETE 🎉');
+    } else {
+      // Find current active phase
+      let currentPhase = 1;
+      for (let i = 1; i <= totalPhases; i++) {
+        if (!state.phases[i]) { currentPhase = i; break; }
+      }
+      dot.style.background = 'var(--accent)';
+      statusEl.innerHTML = '';
+      statusEl.appendChild(dot);
+      statusEl.append(` Phase ${currentPhase} — ${phaseNames[currentPhase - 1]}`);
+    }
+  }
+
+  // ─── INITIAL RENDER ───
+  updateActivePhase();
+  updateEverything();
+</script>
+
+</body>
+</html>
